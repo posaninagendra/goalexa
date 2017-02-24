@@ -25,13 +25,13 @@ func crawlSites(c *cli.Context){
 
 	// verify args
 	if level < 1 || level > 3 {
-		log.Fatalln("invalid deepness level, value is out of range")
+		log.Fatalln("Invalid deepness level, value is out of range")
 	}
 	if jobs < 1 || jobs > 512 {
-		log.Fatalln("invalid threads number, value is out of range")
+		log.Fatalln("Invalid threads number, value is out of range")
 	}
 	if skip < 0 {
-		log.Fatalln("invalid skip number, value is less than 0")
+		log.Fatalln("Invalid skip number, value is less than 0")
 	}
 	// open resources
 	db := openDB(c.String("db"))
@@ -42,7 +42,7 @@ func crawlSites(c *cli.Context){
 	// setup runtime performance
 	nCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(nCPU * 2)
-	log.Printf("crawl started on %d cores, jobs: %d, deepness: %d", nCPU, jobs, level)
+	log.Printf("Crawl started on %d cores, jobs: %d, deepness: %d", nCPU, jobs, level)
 
 	// crawler init
 	resultsChan := make(chan *crawler.Result, processBuffer)
