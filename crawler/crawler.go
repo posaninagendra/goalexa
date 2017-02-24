@@ -5,13 +5,16 @@
 package crawler
 
 import (
+	"bytes"
+	"log"
 	"fmt"
 	"net/http"
-	"bytes"
 	"errors"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
+	"io/ioutil"
 
 	"github.com/rakyll/coop"
 	"github.com/boltdb/bolt"
@@ -22,7 +25,7 @@ import (
 var processes = runtime.NumCPU() * 2
 var processBuffer = 128 * processes
 
-var BucketSites = []bytes("sites")
+var BucketSites = []byte("sites")
 
 const connectionTimeout = time.Second * 10
 
@@ -40,6 +43,7 @@ type Crawler struct{
 }
 
 type Result struct{
+	Rank 		string
 	URL         string
 	Host 		string
 	Title       string
@@ -48,7 +52,11 @@ type Result struct{
 	Language 	string
 	Links		[]string
 	Headers		map[string][]string
-	LastModified [string]
+	LastModified []string
+}
+
+func (r Result) String() string {
+        return fmt.Sprintf("Rank: %s\t Host: %s ", r.Rank, r.Host)
 }
 
 func New(db *bolt.DB, config *Config) *Crawler{
@@ -70,7 +78,8 @@ func (cr *Crawler) Crawl(resultChan chan<-*Result, errorChan chan<-struct{}, ski
 				if bytesLess(k, skipB) {
 					return nil
 				}
-				cr.uriChan <- string(v)
+				kv := string(k) + ":" + string(v)
+				cr.uriChan <- kv
 				return nil
 			})
 			return nil
@@ -101,23 +110,25 @@ return nil
 }
 
 func (cr *Crawler) crawlURI(uri string) (result *Result, err error) {
-	mi, err := metainspector.New(uri, &metainspector.Config{
-		Timeout: connectionTimeout,
-	})
+	url := strings.Split(uri,":")
+	mi, err := metainspector.New(url[1])
 	if err != nil {
+		log.Println("1:",err)
 		return nil, err
 	}
-	resp, err := http.Get(uri)
+	resp, err := http.Get("http://" + url[1])
 	if err != nil{
+		log.Println("2:",err)
 		return nil, err
 	}
 	resData, err := ioutil.ReadAll(resp.Body)
 	if err != nil{
-		fmt.Println(err)
+		log.Println("3:",err)
 	}
 	body := string(resData)
-	headers := resp.Headers
+	headers := resp.Header
 	result = &Result{
+		Rank:		 url[0],
 		URL:         mi.Url(),
 		Host: 		 mi.Host(),
 		Title:       mi.Title(),
@@ -126,9 +137,9 @@ func (cr *Crawler) crawlURI(uri string) (result *Result, err error) {
 		Language:    mi.Language(),
 		Links: 		 mi.Links(),
 		Headers: 	 headers,
-		LastModified: headers["Last-Modified"]
+		LastModified: headers["Last-Modified"],
 	}
-	
+	log.Print(result)
 	return
 }
 
