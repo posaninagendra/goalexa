@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"runtime"
+	"time"
 	
 	"github.com/codegangsta/cli"
 )
@@ -15,6 +16,7 @@ const sitesNum int64 = 1e6
 var app = cli.NewApp()
 
 func init() {
+	var currentDB = time.Now().Format("02-01-2006-15-04-05") + ".db"
 	log.SetFlags(log.Lshortfile)
 
 	app.Name = "crawl"
@@ -36,7 +38,7 @@ func init() {
 			Usage:  "Start crawling the cached sites and check against some patterns",
 			Flags: []cli.Flag{
 				cli.StringFlag{Name: "db", Value: "sites.db", Usage: "A path to DB with cached domains"},
-				cli.StringFlag{Name: "out, o", Value: "crawled.db", Usage: "A file to output the results to"},
+				cli.StringFlag{Name: "out, o", Value: currentDB, Usage: "A file to output the results to"},
 				cli.IntFlag{Name: "level, l", Value: 1, Usage: "How deeply the crawler should go (1-3)"},
 				cli.IntFlag{Name: "jobs, j", Value: 1, Usage: "Maximum parallel jobs allowed (1-64)"},
 				cli.IntFlag{Name: "skip, s", Usage: "Skips the defined number of top-positions"},
